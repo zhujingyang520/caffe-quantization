@@ -14,6 +14,7 @@ import tempfile, os
 import numpy as np
 import math
 from fixed_point import FixedPoint
+import collections
 
 # global variable: caffenet pretrained weights
 caffenet_weights = caffe_root + '/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'
@@ -134,7 +135,9 @@ def sim_fixed_point_caffenet(LMDB_filename, bit_width, blobs_range,
         WFixedPoint = FixedPoint(weights_quantization_params[k]['range'],
                 weights_quantization_params[k]['bit_width'], round_method=round_method,
                 round_strategy=round_strategy)
+        #print 'Before kernel[%s]: %d' % (k, len(np.unique(v[0].data)))
         v[0].data[...] = WFixedPoint.quantize(v[0].data)
+        #print 'After kernel[%s]: %d' % (k, len(np.unique(v[0].data)))
 
         # 2. quantize the biases
         BFixedPoint = FixedPoint(biases_quantization_params[k]['range'],
@@ -176,7 +179,7 @@ def quantization_param_wrapper(bit_width, data_range, round_method='FLOOR',
     if type(bit_width) is int:
         for k in data_range:
             dict_bit_width[k] = bit_width
-    elif type(bit_width) is dict:
+    elif type(bit_width) is dict or type(bit_width) is collections.OrderedDict:
         dict_bit_width = bit_width
     else:
         raise TypeError('unexpected data type of bitwidth')
